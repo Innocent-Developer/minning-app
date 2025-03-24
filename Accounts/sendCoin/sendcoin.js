@@ -182,7 +182,7 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
                             <p style="color: #666;">Total Deducted: ${totalDeduction} Coins</p>
                             <p style="color: #666;">Transaction Time: ${new Date().toLocaleString()}</p>
                             <p style="color: #666;">New Available Balance: ${newSenderAvailableBalance}</p>
-                            <a href="http://localhost:5000/get-transaction/${transactionHash}" style="color: #666;">Transaction Hash: ${transactionHash}</a>
+                            <a href="https://minning-app.onrender.com/get-transaction/${transactionHash}" style="color: #666;">Transaction Hash: ${transactionHash}</a>
                             <div style="text-align: center; margin-top: 20px;">
                                 <p style="color: #888; font-size: 12px;">Thank you for using our service!</p>
                             </div>
@@ -207,7 +207,7 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
                             <p style="color: #666;">From: ${senderAddress}</p>
                             <p style="color: #666;">Transaction Time: ${new Date().toLocaleString()}</p>
                             <p style="color: #666;">New Available Balance: ${newReceiverAvailableBalance}</p>
-                            <a href="http://localhost:5000/get-transaction/${transactionHash}" style="color: #666;">Transaction Hash: ${transactionHash}</a>
+                            <a href="https://minning-app.onrender.com/get-transaction/${transactionHash}" style="color: #666;">Transaction Hash: ${transactionHash}</a>
                             <div style="text-align: center; margin-top: 20px;">
                                 <p style="color: #888; font-size: 12px;">Thank you for using our service!</p>
                             </div>

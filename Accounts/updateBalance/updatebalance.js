@@ -45,8 +45,8 @@ const updateAvailableBalance = async () => {
     }
 };
 
-// Run the update every 1 minute (60000 milliseconds)
-setInterval(updateAvailableBalance, 60000);
+// Run the update every 24 hours (24 * 60 * 60 * 1000 milliseconds)
+setInterval(updateAvailableBalance, 24 * 60 * 60 * 1000);
 
 module.exports = updateAvailableBalance;
 

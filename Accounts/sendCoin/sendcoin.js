@@ -33,10 +33,49 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
                 { senderAddress: senderAddress }
             ]
         });
-        const senderEmail = senderAccount.email;
+        
         if (!senderAccount) {
+            // Configure nodemailer for error notification
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASS
+                }
+            });
+
+            // Send error email to sender
+            const errorMailOptions = {
+                from: process.env.EMAIL_USER,
+                to: senderAddress,
+                subject: '❌ Transaction Failed - Sender Not Found',
+                html: `
+                    <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
+                        <div style="background-color: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <h2 style="color: #dc3545; text-align: center;">Transaction Failed ❌</h2>
+                            <div style="border-bottom: 2px solid #eee; margin: 15px 0;"></div>
+                            <p style="color: #333;">Dear User,</p>
+                            <p style="color: #666;">Your transaction has failed because the sender account was not found in our system.</p>
+                            <p style="color: #666;">Transaction Details:</p>
+                            <ul style="color: #666;">
+                                <li>Attempted Amount: ${transferAmount} Coins</li>
+                                <li>Receiver Address: ${receiverAddress}</li>
+                                <li>Time: ${new Date().toLocaleString()}</li>
+                            </ul>
+                            <p style="color: #666;">Please verify your account details and try again.</p>
+                            <div style="text-align: center; margin-top: 20px;">
+                                <p style="color: #888; font-size: 12px;">If you believe this is an error, please contact support.</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            };
+
+            await transporter.sendMail(errorMailOptions);
             throw new Error('Sender account not found');
         }
+
+        const senderEmail = senderAccount.email;
 
         // Check if sender is KYC verified
         if (senderAccount.kycStatuys !== "verifed") {

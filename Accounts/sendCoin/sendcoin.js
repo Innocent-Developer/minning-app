@@ -3,6 +3,7 @@ const nodemailer = require('nodemailer');
 const dotenv = require("dotenv");
 const recordTransaction = require('../history/all-transaction-record-store.js');
 const { mongoose } = require('mongoose');
+const Transaction = require('../../SchemaDb/all-transactionSchema');
 dotenv.config();
 
 const ADMIN_EMAIL = process.env.Admin_Email;
@@ -22,20 +23,182 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
             throw new Error('Invalid transfer amount');
         }
 
+        // Check transaction count for sender today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        const transactionCount = await Transaction.countDocuments({
+            senderAddress: senderAddress,
+            timestamp: {
+                $gte: today,
+                $lt: tomorrow
+            },
+            status: 'completed'
+        });
+
+        // Check if transaction count exceeds limit
+        const DAILY_TRANSACTION_LIMIT = 5;
+        if (transactionCount >= DAILY_TRANSACTION_LIMIT) {
+            // Generate failed transaction hash
+            const failedTransactionHash = require('crypto')
+                .createHash('sha256')
+                .update(`${senderAddress}${receiverAddress}${amount}${Date.now()}`)
+                .digest('hex');
+
+            // Record the failed transaction
+            await recordTransaction(
+                senderAddress,
+                receiverAddress,
+                transferAmount,
+                '0',
+                failedTransactionHash,
+                'failed'
+            );
+
+            // Find sender account details
+            const senderAccount = await AccountCreate.findOne({
+                $or: [
+                    { email: senderAddress },
+                    { senderAddress: senderAddress },
+                    { receiveAddress: senderAddress }
+                ]
+            });
+
+            if (senderAccount && senderAccount.email) {
+                // Configure email transport
+                const transporter = nodemailer.createTransport({
+                    service: 'gmail',
+                    auth: {
+                        user: process.env.EMAIL_USER,
+                        pass: process.env.EMAIL_PASS
+                    }
+                });
+
+                // Send failure notification email
+                const mailOptions = {
+                    from: process.env.EMAIL_USER,
+                    to: senderAccount.email,
+                    subject: '❌ Transaction Failed - Daily Limit Exceeded',
+                    html: `
+                        <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
+                            <div style="background-color: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                <h2 style="color: #dc3545; text-align: center;">Transaction Failed</h2>
+                                <div style="border-bottom: 2px solid #eee; margin: 15px 0;"></div>
+                                <p style="color: #333;">Dear ${senderAccount.Fullname || 'Valued User'},</p>
+                                <p style="color: #666;">Your transaction has failed due to exceeding the daily transaction limit.</p>
+                                <p style="color: #666;">Attempted transfer amount: ${transferAmount} Coins</p>
+                                <p style="color: #666;">To: ${receiverAddress}</p>
+                                <p style="color: #666;">Transaction Time: ${new Date().toLocaleString()}</p>
+                                <p style="color: #666;">Reason: Daily transaction limit exceeded (maximum ${DAILY_TRANSACTION_LIMIT} transactions per day)</p>
+                                <p style="color: #666;">Current transaction count: ${transactionCount}</p>
+                                <a href="https://minning-app.onrender.com/get-transaction/${failedTransactionHash}" style="color: #666;">Transaction Hash: ${failedTransactionHash}</a>
+                                <div style="text-align: center; margin-top: 20px;">
+                                    <p style="color: #888; font-size: 12px;">Please try again tomorrow when your daily limit resets.</p>
+                                </div>
+                            </div>
+                        </div>
+                    `
+                };
+
+                try {
+                    await transporter.sendMail(mailOptions);
+                } catch (error) {
+                    console.error('Failed to send failure notification email:', error);
+                }
+            }
+
+            // Abort transaction and return failure response
+            await session.abortTransaction();
+            session.endSession();
+            
+            return {
+                success: false,
+                status: 'failed',
+                message: `Daily transaction limit exceeded. Maximum ${DAILY_TRANSACTION_LIMIT} transactions allowed per day. Current count: ${transactionCount}`,
+                transactionHash: failedTransactionHash
+            };
+        }
+
         // Calculate gas fee
         const gasFee = transferAmount * 0.10; // 10% of transfer amount
         const totalDeduction = transferAmount + gasFee;
 
-        // Find sender account by email or senderAddress
+        // Find sender account by email, senderAddress, or receiveAddress
         const senderAccount = await AccountCreate.findOne({
             $or: [
                 { email: senderAddress },
-                { senderAddress: senderAddress }
+                { senderAddress: senderAddress },
+                { receiveAddress: senderAddress }
             ]
-        });
+        }).session(session);
         
         if (!senderAccount) {
-            // Configure nodemailer for error notification
+            await session.abortTransaction();
+            return {
+                success: false,
+                message: 'Sender account not found',
+                error: new Error('Sender account not found')
+            };
+        }
+
+        const senderEmail = senderAccount.email;
+
+        // Check if sender is KYC verified
+        if (senderAccount.kycStatuys !== "verifed") {
+            await session.abortTransaction();
+            return {
+                success: false,
+                message: 'Sender account is not KYC verified. Please complete KYC verification to send coins.',
+                error: new Error('KYC verification required')
+            };
+        }
+
+        // Find receiver account by receiveAddress
+        const receiverAccount = await AccountCreate.findOne({ receiveAddress: receiverAddress }).session(session);
+        if (!receiverAccount) {
+            await session.abortTransaction();
+            return {
+                success: false,
+                message: 'Receiver account not found',
+                error: new Error('Receiver account not found')
+            };
+        }
+
+        // Get receiver's email
+        const receiverEmail = receiverAccount.email;
+
+        // Find admin account
+        const adminAccount = await AccountCreate.findOne({ email: ADMIN_EMAIL }).session(session);
+        if (!adminAccount) {
+            await session.abortTransaction();
+            return {
+                success: false,
+                message: 'Admin account not found',
+                error: new Error('Admin account not found')
+            };
+        }
+
+        // Check if sender has sufficient available balance including gas fee
+        const senderAvailableBalance = parseFloat(senderAccount.availableBalance) || 0;
+        if (senderAvailableBalance < totalDeduction) {
+            // Record failed transaction due to insufficient balance
+            const failedTransactionHash = require('crypto')
+                .createHash('sha256')
+                .update(`${senderAddress}${receiverAddress}${amount}${Date.now()}`)
+                .digest('hex');
+
+            await recordTransaction(
+                senderAddress,
+                receiverAddress,
+                transferAmount,
+                '0',
+                failedTransactionHash,
+                'failed'
+            );
+
+            // Send failure notification email
             const transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
@@ -44,63 +207,45 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
                 }
             });
 
-            // Send error email to sender
-            const errorMailOptions = {
+            const mailOptions = {
                 from: process.env.EMAIL_USER,
-                to: senderAddress,
-                subject: '❌ Transaction Failed - Sender Not Found',
+                to: senderEmail,
+                subject: '❌ Transaction Failed - Insufficient Balance',
                 html: `
                     <div style="background-color: #f8f9fa; padding: 20px; font-family: Arial, sans-serif;">
                         <div style="background-color: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                            <h2 style="color: #dc3545; text-align: center;">Transaction Failed ❌</h2>
+                            <h2 style="color: #dc3545; text-align: center;">Transaction Failed</h2>
                             <div style="border-bottom: 2px solid #eee; margin: 15px 0;"></div>
-                            <p style="color: #333;">Dear User,</p>
-                            <p style="color: #666;">Your transaction has failed because the sender account was not found in our system.</p>
-                            <p style="color: #666;">Transaction Details:</p>
-                            <ul style="color: #666;">
-                                <li>Attempted Amount: ${transferAmount} Coins</li>
-                                <li>Receiver Address: ${receiverAddress}</li>
-                                <li>Time: ${new Date().toLocaleString()}</li>
-                            </ul>
-                            <p style="color: #666;">Please verify your account details and try again.</p>
+                            <p style="color: #333;">Dear ${senderAccount.Fullname || 'Valued User'},</p>
+                            <p style="color: #666;">Your transaction has failed due to insufficient balance.</p>
+                            <p style="color: #666;">Attempted transfer amount: ${transferAmount} Coins</p>
+                            <p style="color: #666;">Gas fee: ${gasFee} Coins</p>
+                            <p style="color: #666;">Total required: ${totalDeduction} Coins</p>
+                            <p style="color: #666;">Your available balance: ${senderAvailableBalance} Coins</p>
+                            <p style="color: #666;">To: ${receiverAddress}</p>
+                            <p style="color: #666;">Transaction Time: ${new Date().toLocaleString()}</p>
+                            <a href="https://minning-app.onrender.com/get-transaction/${failedTransactionHash}" style="color: #666;">Transaction Hash: ${failedTransactionHash}</a>
                             <div style="text-align: center; margin-top: 20px;">
-                                <p style="color: #888; font-size: 12px;">If you believe this is an error, please contact support.</p>
+                                <p style="color: #888; font-size: 12px;">Please ensure sufficient balance and try again.</p>
                             </div>
                         </div>
                     </div>
                 `
             };
 
-            await transporter.sendMail(errorMailOptions);
-            throw new Error('Sender account not found');
-        }
+            try {
+                await transporter.sendMail(mailOptions);
+            } catch (error) {
+                console.error('Failed to send insufficient balance notification email:', error);
+            }
 
-        const senderEmail = senderAccount.email;
-
-        // Check if sender is KYC verified
-        if (senderAccount.kycStatuys !== "verifed") {
-            throw new Error('Sender account is not KYC verified. Please complete KYC verification to send coins.');
-        }
-
-        // Find receiver account by receiveAddress
-        const receiverAccount = await AccountCreate.findOne({ receiveAddress: receiverAddress });
-        if (!receiverAccount) {
-            throw new Error('Receiver account not found');
-        }
-
-        // Get receiver's email
-        const receiverEmail = receiverAccount.email;
-
-        // Find admin account
-        const adminAccount = await AccountCreate.findOne({ email: ADMIN_EMAIL });
-        if (!adminAccount) {
-            throw new Error('Admin account not found');
-        }
-
-        // Check if sender has sufficient available balance including gas fee
-        const senderAvailableBalance = parseFloat(senderAccount.availableBalance) || 0;
-        if (senderAvailableBalance < totalDeduction) {
-            throw new Error('Insufficient available balance (including gas fee)');
+            await session.abortTransaction();
+            return {
+                success: false,
+                message: 'Insufficient available balance (including gas fee)',
+                error: new Error('Insufficient balance'),
+                transactionHash: failedTransactionHash
+            };
         }
 
         // Update sender's balances (deduct transfer amount and gas fee)
@@ -124,18 +269,6 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
         let emailStatus = false;
 
         try {
-            // Add rate limiting for receiver
-            const receiverTransactionCount = await AccountCreate.countDocuments({
-                email: receiverEmail,
-                'transactions.timestamp': {
-                    $gte: new Date(Date.now() - 120000) // Last 2 minutes
-                }
-            });
-
-            if (receiverTransactionCount >= 10) { // Max 10 transactions per minute
-                throw new Error('Too many transactions for this receiver. Please try again later.');
-            }
-
             // Perform the updates in a transaction with optimistic locking
             await Promise.all([
                 AccountCreate.findOneAndUpdate(
@@ -146,9 +279,10 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
                     {
                         availableBalance: newSenderAvailableBalance,
                         totalBalance: newSenderTotalBalance,
-                        sendCoin: newSenderSendCoin
+                        sendCoin: newSenderSendCoin,
+                        $push: { transactions: { timestamp: new Date() } }
                     },
-                    { new: true }
+                    { new: true, session }
                 ),
                 AccountCreate.findOneAndUpdate(
                     {
@@ -156,11 +290,10 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
                         availableBalance: receiverAccount.availableBalance // Optimistic lock
                     },
                     {
-                        $push: { transactions: { timestamp: new Date() } },
                         availableBalance: newReceiverAvailableBalance,
                         totalBalance: newReceiverTotalBalance
                     },
-                    { new: true }
+                    { new: true, session }
                 ),
                 AccountCreate.findByIdAndUpdate(
                     adminAccount._id,
@@ -168,14 +301,27 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
                         availableBalance: newAdminAvailableBalance,
                         totalBalance: newAdminTotalBalance
                     },
-                    { new: true }
+                    { new: true, session }
                 )
             ]);
             transactionStatus = true;
         } catch (error) {
-            if (error.message.includes('Too many transactions')) {
-                throw error;
-            }
+            // Record failed transaction
+            const failedTransactionHash = require('crypto')
+                .createHash('sha256')
+                .update(`${senderAddress}${receiverAddress}${amount}${Date.now()}`)
+                .digest('hex');
+
+            await recordTransaction(
+                senderAddress,
+                receiverAddress,
+                transferAmount,
+                '0',
+                failedTransactionHash,
+                'failed'
+            );
+
+            await session.abortTransaction();
             throw new Error('Failed to update account balances: ' + error.message);
         }
 
@@ -188,8 +334,9 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
 
         // Record transaction with hash
         try {
-            await recordTransaction(senderAddress, receiverAddress, amount, gasFeeString, transactionHash);
+            await recordTransaction(senderAddress, receiverAddress, amount, gasFeeString, transactionHash, 'completed');
         } catch (error) {
+            await session.abortTransaction();
             throw new Error('Failed to record transaction: ' + error.message);
         }
 
@@ -202,6 +349,11 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
                     pass: process.env.EMAIL_PASS
                 }
             });
+
+            // Verify email addresses exist before sending
+            if (!senderEmail || !receiverEmail) {
+                throw new Error('Missing email address for sender or receiver');
+            }
 
             // Send email to sender
             const senderMailOptions = {
@@ -262,12 +414,32 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
             ]);
             emailStatus = true;
         } catch (error) {
-            throw new Error('Failed to send email notifications: ' + error.message);
+            console.error('Email error:', error);
+            // Continue with transaction even if email fails
+            emailStatus = true; // Set to true to allow transaction to complete
         }
 
         if (!transactionStatus || !emailStatus) {
+            // Record failed transaction
+            const failedTransactionHash = require('crypto')
+                .createHash('sha256')
+                .update(`${senderAddress}${receiverAddress}${amount}${Date.now()}`)
+                .digest('hex');
+
+            await recordTransaction(
+                senderAddress,
+                receiverAddress,
+                transferAmount,
+                '0',
+                failedTransactionHash,
+                'failed'
+            );
+
+            await session.abortTransaction();
             throw new Error('Transaction or email notification failed');
         }
+
+        await session.commitTransaction();
 
         return {
             success: true,
@@ -284,12 +456,15 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
         };
 
     } catch (error) {
+        await session.abortTransaction();
         console.error('Transfer error:', error);
         return {
             success: false,
             message: error.message,
             error: error
         };
+    } finally {
+        session.endSession();
     }
 };
 

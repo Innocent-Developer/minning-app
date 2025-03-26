@@ -35,7 +35,8 @@ const login = async (req, res) => {
                 email: user.email,
                 totalBalance: user.totalBalance,
                 sendCoin: user.sendCoin,
-                receiveAddress: user.receiveAddress
+                receiveAddress: user.receiveAddress,
+                senderAddress: user.senderAddress
             }
         });
 

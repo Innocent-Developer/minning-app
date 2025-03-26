@@ -9,9 +9,9 @@ const accountVerified = require("../Accounts/verifedAccount/accountVerifered");
 const passwordResetLink = require("../PassWord-reset/password-reset-link");
 const changePassword = require("../PassWord-reset/changePassword");
 const submitKyc = require("../Accounts/verifedAccount/summit-lyc");
+const getUserInfo = require("../Accounts/getUser"); // Assuming this is the path to the new function
+const getUserTransactions = require("../Accounts/history/getUserTransaction");
 const router = express.Router();
-
-
 
 // Routes
 router.post("/signup", signup);
@@ -21,8 +21,10 @@ router.post('/accountVerified', accountVerified);
 router.post('/passwordResetLink', passwordResetLink);
 router.post('/changePassword', changePassword);
 router.post('/aaply-kyc', submitKyc);
-router.get("/get-all-transaction", getAllrecord)
-router.get("/get-transaction/:transaction_Hash", HashRecord)
+router.get("/get-all-transaction", getAllrecord);
+router.get("/get-transaction/:transaction_Hash", HashRecord);
+router.post('/get-user-info', getUserInfo);
+router.post('/get-user-transaction', getUserTransactions);
 router.post('/send-coin', async (req, res) => {
     try {
         const { senderAddress, receiverAddress, amount } = req.body;
@@ -44,5 +46,6 @@ router.post('/send-coin', async (req, res) => {
     }
 });
 
+// New route to get user information by post _id
 
 module.exports = router;

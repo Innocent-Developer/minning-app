@@ -2,23 +2,19 @@ const Transaction = require('../../SchemaDb/all-transactionSchema'); // Adjust t
 
 // Route to get all transactions by receivingAddress
 const getUserTransactions = async (req, res) => {
-    const { receiverAddress } = req.body; // Expecting receivingAddress in the request body
+    const { address } = req.body; // Expecting one address to check both sender and receiver
 
-    if (!receiverAddress) {
-        return res.status(400).json({ error: 'Receiving address is required' });
+    if (!address) {
+        return res.status(400).json({ error: 'Address is required' });
     }
 
     try {
         const transactions = await Transaction.find({
             $or: [
-                { receiverAddress },
-                { senderAddress: receiverAddress }
+                { senderAddress: address },
+                { receiverAddress: address }
             ]
         });
-
-        if (!transactions || transactions.length === 0) {
-            return res.status(404).json({ error: 'No transactions found for this receiving address' });
-        }
 
         return res.status(200).json(transactions);
     } catch (error) {
@@ -28,3 +24,4 @@ const getUserTransactions = async (req, res) => {
 };
 
 module.exports = getUserTransactions;
+

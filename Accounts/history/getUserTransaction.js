@@ -9,7 +9,12 @@ const getUserTransactions = async (req, res) => {
     }
 
     try {
-        const transactions = await Transaction.find({ receiverAddress });
+        const transactions = await Transaction.find({
+            $or: [
+                { receiverAddress },
+                { senderAddress: receiverAddress }
+            ]
+        });
 
         if (!transactions || transactions.length === 0) {
             return res.status(404).json({ error: 'No transactions found for this receiving address' });

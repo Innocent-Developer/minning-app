@@ -20,18 +20,18 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
         const senderAccountCheck = await AccountCreate.findOne({ senderAddress });
 
         if (!senderAccountCheck) {
-            return res.status(400).json({ message: "Sender address not found!" });
+            return { message: "Sender address not found!" };
         }
 
         const receiverAccountCheck = await AccountCreate.findOne({ receiverAddress });
 
         if (!receiverAccountCheck) {
-            return res.status(400).json({ message: "Receiver address not found!" });
+            return { message: "Receiver address not found!" };
         }
 
         // Ensure that the sender and receiver are different users
         if (senderAccountCheck.senderAddress === receiverAccountCheck.senderAddress) {
-            return res.status(400).json({ message: "Sender and receiver cannot be the same user!" });
+            return { message: "Sender and receiver cannot be the same user!" };
         }
 
 

@@ -10,7 +10,7 @@ const getUserTransactions = async (req, res) => {
 
     try {
         const transactions = await Transaction.find({
-            receiverAddress: address // Fixed the syntax error here
+            senderAddress: address // Fixed the syntax error here
         });
 
         return res.status(200).json(transactions);

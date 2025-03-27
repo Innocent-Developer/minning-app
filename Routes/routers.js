@@ -1,4 +1,5 @@
 const express = require("express");
+const router = express.Router();
 const signup = require("../Accounts/Signup");
 const login = require("../Accounts/login");
 const sendCoin = require("../Accounts/sendCoin/sendcoin");
@@ -11,7 +12,7 @@ const changePassword = require("../PassWord-reset/changePassword");
 const submitKyc = require("../Accounts/verifedAccount/summit-lyc");
 const getUserInfo = require("../Accounts/getUser"); // Assuming this is the path to the new function
 const getUserTransactions = require("../Accounts/history/getUserTransaction");
-const router = express.Router();
+const getSenderUserTransaction = require("../Accounts/history/getsenderusertransaction");
 
 // Routes
 router.post("/signup", signup);
@@ -25,6 +26,7 @@ router.get("/get-all-transaction", getAllrecord);
 router.get("/get-transaction/:transaction_Hash", HashRecord);
 router.post('/get-user-info', getUserInfo);
 router.post('/get-user-transaction', getUserTransactions);
+router.post('/get-sender-user-transaction', getSenderUserTransaction);
 router.post('/send-coin', async (req, res) => {
     try {
         const { senderAddress, receiverAddress, amount } = req.body;
@@ -46,6 +48,5 @@ router.post('/send-coin', async (req, res) => {
     }
 });
 
-// New route to get user information by post _id
 
 module.exports = router;

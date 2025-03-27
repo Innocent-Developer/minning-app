@@ -13,7 +13,7 @@ const submitKyc = require("../Accounts/verifedAccount/summit-lyc");
 const getUserInfo = require("../Accounts/getUser"); // Assuming this is the path to the new function
 const getUserTransactions = require("../Accounts/history/getUserTransaction");
 const getSenderUserTransaction = require("../Accounts/history/getsenderusertransaction");
-
+const storeEmail = require("../Email/storeEmail");z
 // Routes
 router.post("/signup", signup);
 router.post("/login", login);
@@ -27,6 +27,7 @@ router.get("/get-transaction/:transaction_Hash", HashRecord);
 router.post('/get-user-info', getUserInfo);
 router.post('/get-user-transaction', getUserTransactions);
 router.post('/get-sender-user-transaction', getSenderUserTransaction);
+router.post('/store-email', storeEmail);
 router.post('/send-coin', async (req, res) => {
     try {
         const { senderAddress, receiverAddress, amount } = req.body;

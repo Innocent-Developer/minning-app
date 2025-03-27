@@ -12,7 +12,7 @@ const storeEmail = async (req, res) => {
     try {
         const newEmail = new Email({ emailAddress });
         await newEmail.save();
-        return res.status(201).json({ message: 'Email stored successfully', email: newEmail });
+        return res.status(201).json({ message: ' successfully Subscribe to our newsletter for the latest updates.', email: newEmail });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ error: 'An error occurred while storing the email' });

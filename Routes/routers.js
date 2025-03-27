@@ -1,5 +1,8 @@
 const express = require("express");
 const router = express.Router();
+
+
+
 const signup = require("../Accounts/Signup");
 const login = require("../Accounts/login");
 const sendCoin = require("../Accounts/sendCoin/sendcoin");
@@ -13,7 +16,7 @@ const submitKyc = require("../Accounts/verifedAccount/summit-lyc");
 const getUserInfo = require("../Accounts/getUser"); // Assuming this is the path to the new function
 const getUserTransactions = require("../Accounts/history/getUserTransaction");
 const getSenderUserTransaction = require("../Accounts/history/getsenderusertransaction");
-const storeEmail = require("../Email/storeEmail");z
+const storeEmail = require("../Email/storeEmail");
 // Routes
 router.post("/signup", signup);
 router.post("/login", login);

@@ -1,7 +1,7 @@
 
-const Email = require('../SchemaDb/storeEmailMarketing'); // Adjust the path as necessary
+const Email = require('../SchemaDb/storeEmailMarketing'); 
 
-// Route to store email
+
 const storeEmail = async (req, res) => {
     const { emailAddress } = req.body;
 

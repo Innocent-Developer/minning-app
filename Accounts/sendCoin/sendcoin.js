@@ -16,6 +16,25 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
         if (!senderAddress || !receiverAddress || !amount) {
             throw new Error('Missing required parameters');
         }
+        // Check if sender is trying to send coins to their own receive address
+        const senderAccountCheck = await AccountCreate.findOne({ senderAddress });
+
+        if (!senderAccountCheck) {
+            return res.status(400).json({ message: "Sender address not found!" });
+        }
+
+        const receiverAccountCheck = await AccountCreate.findOne({ receiverAddress });
+
+        if (!receiverAccountCheck) {
+            return res.status(400).json({ message: "Receiver address not found!" });
+        }
+
+        // Ensure that the sender and receiver are different users
+        if (senderAccountCheck.senderAddress === receiverAccountCheck.senderAddress) {
+            return res.status(400).json({ message: "Sender and receiver cannot be the same user!" });
+        }
+
+
 
         // Convert amount to number and validate
         const transferAmount = parseFloat(amount);
@@ -112,7 +131,7 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
             // Abort transaction and return failure response
             await session.abortTransaction();
             session.endSession();
-            
+
             return {
                 success: false,
                 status: 'failed',
@@ -133,7 +152,7 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
                 { receiveAddress: senderAddress }
             ]
         }).session(session);
-        
+
         if (!senderAccount) {
             await session.abortTransaction();
             return {

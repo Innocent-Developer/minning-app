@@ -11,7 +11,7 @@ const getUserTransactions = async (req, res) => {
     try {
         const transactions = await Transaction.find({
             senderAddress: address // Fixed the syntax error here
-        });
+        }).sort({ timestamp: -1 }); // Sort by timestamp in descending order to show latest transactions first
 
         return res.status(200).json(transactions);
     } catch (error) {

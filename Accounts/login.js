@@ -34,6 +34,7 @@ const login = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 totalBalance: user.totalBalance,
+                availableBalance: user.availableBalance,
                 sendCoin: user.sendCoin,
                 receiveAddress: user.receiveAddress,
                 senderAddress: user.senderAddress

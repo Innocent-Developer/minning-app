@@ -17,6 +17,7 @@ const getUserInfo = require("../Accounts/getUser"); // Assuming this is the path
 const getUserTransactions = require("../Accounts/history/getUserTransaction");
 const getSenderUserTransaction = require("../Accounts/history/getsenderusertransaction");
 const storeEmail = require("../Email/storeEmail");
+const updateLastMined = require("../Accounts/updatelastMined"); 
 // Routes
 router.post("/signup", signup);
 router.post("/login", login);
@@ -31,6 +32,7 @@ router.post('/get-user-info', getUserInfo);
 router.post('/get-user-transaction', getUserTransactions);
 router.post('/get-sender-user-transaction', getSenderUserTransaction);
 router.post('/store-email', storeEmail);
+router.post('/update-last-mined', updateLastMined);
 router.post('/send-coin', async (req, res) => {
     try {
         const { senderAddress, receiverAddress, amount } = req.body;

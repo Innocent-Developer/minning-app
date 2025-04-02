@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const AccountCreate = require('../SchemaDb/accountCreate');
 
-router.post('/updateLastMined', async (req, res) => {
+const updateLastMined = async (req, res) => {
     const { userId } = req.body;
 
     if (!userId) {
@@ -28,6 +28,6 @@ router.post('/updateLastMined', async (req, res) => {
         console.error('Error updating last mined date:', error);
         return res.status(500).json({ error: 'Server error. Please try again later.' });
     }
-});
+};
 
-module.exports = router;
+module.exports = updateLastMined;

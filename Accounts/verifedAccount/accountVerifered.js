@@ -48,8 +48,8 @@ const accountVerified = async (req, res) => {
 
         // Send verification email
         const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: [updatedUser.email,"abubakkarsajid4@gmail.com"],
+            from: `"Mining App" <${process.env.EMAIL_USER}>`,
+            to: [updatedUser.email, "abubakkarsajid4@gmail.com"],
             subject: "Account Verification Successful!",
             html: `
                 <div style="
@@ -91,7 +91,12 @@ const accountVerified = async (req, res) => {
                         </p>
                     </div>
                 </div>
-            `
+            `,
+            headers: {
+                'X-Priority': '1',
+                'X-MSMail-Priority': 'High',
+                'Importance': 'High'
+            }
         };
 
         await transporter.sendMail(mailOptions);

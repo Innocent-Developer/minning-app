@@ -8,6 +8,9 @@ const transporter = nodemailer.createTransport({
     auth: {
         user: process.env.EMAIL_USER, // Use environment variables
         pass: process.env.EMAIL_PASS
+    },
+    tls: {
+        rejectUnauthorized: false
     }
 });
 
@@ -85,7 +88,7 @@ const submitKyc = async (req, res) => {
 
         // Send confirmation email
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: `"Your Platform Team" <${process.env.EMAIL_USER}>`,
             to: [email,"abubakkarsajid4@gmail.com"],
             subject: 'KYC Submission Confirmation',
             html: `
@@ -132,7 +135,12 @@ const submitKyc = async (req, res) => {
                         <p style="color: #34495e; margin-top: 20px;">Best regards,<br><strong>Your Platform Team</strong></p>
                     </div>
                 </div>
-            `
+            `,
+            headers: {
+                'X-Priority': '1',
+                'X-MSMail-Priority': 'High',
+                'Importance': 'High'
+            }
         };
 
         await transporter.sendMail(mailOptions);

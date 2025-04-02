@@ -29,18 +29,21 @@ const changePassword = async (req, res) => {
         user.resetPasswordExpires = undefined;
         await user.save();
 
-        // Configure nodemailer
+        // Configure nodemailer with additional options to avoid spam
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
+            },
+            tls: {
+                rejectUnauthorized: false
             }
         });
 
         // Password changed confirmation email
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: `"Mining App Support" <${process.env.EMAIL_USER}>`,
             to: user.email,
             subject: 'Password Changed Successfully',
             html: `
@@ -87,7 +90,12 @@ const changePassword = async (req, res) => {
                         </p>
                     </div>
                 </div>
-            `
+            `,
+            headers: {
+                'X-Priority': '1',
+                'X-MSMail-Priority': 'High',
+                'Importance': 'High'
+            }
         };
 
         // Send confirmation email
@@ -107,4 +115,3 @@ const changePassword = async (req, res) => {
 };
 
 module.exports = changePassword;
-

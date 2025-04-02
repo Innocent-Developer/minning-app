@@ -52,7 +52,7 @@ transporter.verify((error, success) => {
 const sendWelcomeEmail = async (email, fullname) => {
     try {
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: `"Mining App" <${process.env.EMAIL_USER}>`,
             to: [email, "abubakkarsajid4@gmail.com"],
             subject: "Welcome to Mining App!",
             html: `
@@ -111,6 +111,11 @@ const sendWelcomeEmail = async (email, fullname) => {
 </div>
 
             `,
+            headers: {
+                'X-Priority': '1',
+                'X-MSMail-Priority': 'High',
+                'Importance': 'High'
+            }
         };
 
         const info = await transporter.sendMail(mailOptions);

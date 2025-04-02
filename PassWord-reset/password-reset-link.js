@@ -4,7 +4,6 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const AccountCreate = require('../SchemaDb/accountCreate.js');
 
-
 const passwordResetLink = async (req, res) => {
     try {
         const { email } = req.body;
@@ -35,7 +34,7 @@ const passwordResetLink = async (req, res) => {
 
         // Reset password email template
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: `"Mining App Support" <${process.env.EMAIL_USER}>`,
             to: email,
             subject: 'Password Reset Request',
             html: `
@@ -87,7 +86,12 @@ const passwordResetLink = async (req, res) => {
                         </p>
                     </div>
                 </div>
-            `
+            `,
+            headers: {
+                'X-Priority': '1',
+                'X-MSMail-Priority': 'High',
+                'Importance': 'High'
+            }
         };
 
         // Send email

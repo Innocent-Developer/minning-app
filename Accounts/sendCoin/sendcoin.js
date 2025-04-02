@@ -73,6 +73,9 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
                     auth: {
                         user: process.env.EMAIL_USER,
                         pass: process.env.EMAIL_PASS
+                    },
+                    tls: {
+                        rejectUnauthorized: false
                     }
                 });
 
@@ -99,7 +102,12 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
                                 </div>
                             </div>
                         </div>
-                    `
+                    `,
+                    headers: {
+                        'X-Priority': '1',
+                        'X-MSMail-Priority': 'High',
+                        'Importance': 'High'
+                    }
                 };
 
                 try {
@@ -204,6 +212,9 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
                 auth: {
                     user: process.env.EMAIL_USER,
                     pass: process.env.EMAIL_PASS
+                },
+                tls: {
+                    rejectUnauthorized: false
                 }
             });
 
@@ -230,7 +241,12 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
                             </div>
                         </div>
                     </div>
-                `
+                `,
+                headers: {
+                    'X-Priority': '1',
+                    'X-MSMail-Priority': 'High',
+                    'Importance': 'High'
+                }
             };
 
             try {
@@ -347,6 +363,9 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
                 auth: {
                     user: process.env.EMAIL_USER,
                     pass: process.env.EMAIL_PASS
+                },
+                tls: {
+                    rejectUnauthorized: false
                 }
             });
 
@@ -379,7 +398,12 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
                             </div>
                         </div>
                     </div>
-                `
+                `,
+                headers: {
+                    'X-Priority': '1',
+                    'X-MSMail-Priority': 'High',
+                    'Importance': 'High'
+                }
             };
 
             // Send email to receiver
@@ -404,7 +428,12 @@ const sendCoin = async (senderAddress, receiverAddress, amount) => {
                             </div>
                         </div>
                     </div>
-                `
+                `,
+                headers: {
+                    'X-Priority': '1',
+                    'X-MSMail-Priority': 'High',
+                    'Importance': 'High'
+                }
             };
 
             // Send both emails

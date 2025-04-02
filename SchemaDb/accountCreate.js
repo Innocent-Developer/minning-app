@@ -22,7 +22,10 @@ const accountCreateSchema = new Schema({
     kycStatuys: { type: String, require: false, default: "un-verifed" },
     totalReferal: { type: String, default: "0" },
     resetPasswordToken: { type: String, required: false },
-    resetPasswordExpires: { type: Date, required: false }
+    resetPasswordExpires: { type: Date, required: false },
+    lastMined: { type: Date, required: false }
+    
+
 });
 
 // Pre-save hook to generate unique receiving and sender addresses

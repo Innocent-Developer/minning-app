@@ -36,8 +36,11 @@ const login = async (req, res) => {
                 totalBalance: user.totalBalance,
                 availableBalance: user.availableBalance,
                 sendCoin: user.sendCoin,
+                kycStatuys: user.kycStatuys,
                 receiveAddress: user.receiveAddress,
-                senderAddress: user.senderAddress
+                senderAddress: user.senderAddress,
+                lastMined: user.lastMined,
+                totalReferal: user.totalReferal
             }
         });
 

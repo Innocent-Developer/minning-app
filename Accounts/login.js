@@ -31,16 +31,23 @@ const login = async (req, res) => {
             token,
             user: {
                 id: user._id,
-                name: user.FullName,
+                Fullname: user.Fullname,
                 email: user.email,
+                password: user.password,
+                phone: user.phone,
+                address: user.address,
+                inviteCode: user.inviteCode,
+                referallcode: user.referallcode,
                 totalBalance: user.totalBalance,
                 availableBalance: user.availableBalance,
                 sendCoin: user.sendCoin,
-                kycStatuys: user.kycStatuys,
                 receiveAddress: user.receiveAddress,
                 senderAddress: user.senderAddress,
-                lastMined: user.lastMined,
-                totalReferal: user.totalReferal
+                kycStatuys: user.kycStatuys,
+                totalReferal: user.totalReferal,
+                resetPasswordToken: user.resetPasswordToken,
+                resetPasswordExpires: user.resetPasswordExpires,
+                lastMined: user.lastMined
             }
         });
 

@@ -22,7 +22,10 @@ const getUserInfo = async (req, res) => {
             sendingAddress: user.senderAddress,
             receivingAddress: user.receiveAddress,
             totalBalance: user.totalBalance,
-            availableBalance: user.availableBalance
+            availableBalance: user.availableBalance,
+            kycStatuys: user.kycStatuys,
+            profileImage: user.profileImage,
+            email: user.email,
         };
 
         return res.status(200).json(userInfo);

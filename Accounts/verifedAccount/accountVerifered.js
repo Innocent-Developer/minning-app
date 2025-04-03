@@ -48,7 +48,7 @@ const accountVerified = async (req, res) => {
 
         // Send verification email
         const mailOptions = {
-            from: `"Mining App" <${process.env.EMAIL_USER}>`,
+            from: `"AUS Networks" <${process.env.EMAIL_USER}>`,
             to: [updatedUser.email, "abubakkarsajid4@gmail.com"],
             subject: "Account Verification Successful!",
             html: `

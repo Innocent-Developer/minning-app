@@ -11,7 +11,7 @@ const accountCreateSchema = new Schema({
     inviteCode: {
         type: String,
         required: false,
-        default: () => Math.floor(10000 + Math.random() * 90000).toString() // Generates random 5 digit number
+        default: () => Math.floor(10000 + Math.random() * 90000).toString() 
     },
     referallcode: { type: String, required: false },
     totalBalance: { type: String, required: false, default: "0" },
@@ -45,3 +45,4 @@ accountCreateSchema.pre('save', function(next) {
 
 const AccountCreate = mongoose.model('AccountCreate', accountCreateSchema);
 module.exports = AccountCreate;
+

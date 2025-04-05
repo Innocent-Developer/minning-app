@@ -9,12 +9,7 @@ connectDB();
 const router = require("./Routes/routers");
 // Increase request payload limit in Express
 
-const bodyParser = require('body-parser');
 
-
-// Increase limit to 10MB (adjust as needed)
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
 // Your other routes and server setup here
 

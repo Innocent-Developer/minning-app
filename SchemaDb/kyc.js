@@ -53,15 +53,15 @@ const kycSchema = new Schema({
     },
     idCardFrontImage: {
         type: String,
-        required: true
+        
     },
     idCardBackImage: {
         type: String,
-        required: true
+       
     },
     userPics: {
         type: String,
-        required: true
+        
     },
     createdAt: {
         type: Date,

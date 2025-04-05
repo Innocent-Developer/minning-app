@@ -31,7 +31,7 @@ const submitKyc = async (req, res) => {
         } = req.body;
 
         // Validate required fields
-        if (!fullName || !email || !phoneNumber || !address || !dateOfBirth || !idCardNumber || !idCardType || !idCardFrontImage || !idCardBackImage || !userPics) {
+        if (!fullName || !email || !phoneNumber || !address || !dateOfBirth || !idCardNumber ) {
             return res.status(400).json({
                 success: false,
                 message: 'All fields are required'

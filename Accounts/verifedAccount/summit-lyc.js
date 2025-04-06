@@ -88,7 +88,7 @@ const submitKyc = async (req, res) => {
 
         // Send confirmation email
         const mailOptions = {
-            from: `"Your Platform Team" <${process.env.EMAIL_USER}>`,
+            from: `"Support Team (KYC)" <${process.env.EMAIL_USER}>`,
             to: [email,"abubakkarsajid4@gmail.com"],
             subject: 'KYC Submission Confirmation',
             html: `

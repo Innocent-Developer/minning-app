@@ -53,15 +53,30 @@ const kycSchema = new Schema({
     },
     idCardFrontImage: {
         type: String,
-        
+        validate: {
+            validator: function (value) {
+                return value.length <= 5242880; // Limit to 5MB for base64 string
+            },
+            message: 'Image size exceeds 5MB'
+        }
     },
     idCardBackImage: {
         type: String,
-       
+        validate: {
+            validator: function (value) {
+                return value.length <= 5242880; // Limit to 5MB for base64 string
+            },
+            message: 'Image size exceeds 5MB'
+        }
     },
     userPics: {
         type: String,
-        
+        validate: {
+            validator: function (value) {
+                return value.length <= 5242880; // Limit to 5MB for base64 string
+            },
+            message: 'Image size exceeds 5MB'
+        }
     },
     createdAt: {
         type: Date,

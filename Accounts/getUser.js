@@ -23,6 +23,7 @@ const getUserInfo = async (req, res) => {
             receivingAddress: user.receiveAddress,
             totalBalance: user.totalBalance,
             availableBalance: user.availableBalance,
+            totalReferal:user.totalReferal,
             kycStatuys: user.kycStatuys,
             profileImage: user.profileImage,
             email: user.email,

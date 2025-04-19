@@ -19,6 +19,8 @@ const getSenderUserTransaction = require("../Accounts/history/getsenderusertrans
 const storeEmail = require("../Email/storeEmail");
 const updateLastMined = require("../Accounts/updatelastMined"); 
 const updateKyc = require("../Accounts/verifedAccount/updatekyc");
+const getReferralList = require("../Accounts/refferall-list-show/referalllist");
+
 // Routes
 router.post("/signup", signup);
 router.post("/login", login);
@@ -34,7 +36,8 @@ router.post('/get-user-transaction', getUserTransactions);
 router.post('/get-sender-user-transaction', getSenderUserTransaction);
 router.post('/store-email', storeEmail);
 router.post('/update-last-mined', updateLastMined);
-router.put('/update-kyc',updateKyc)
+router.put('/update-kyc',updateKyc);
+router.post('/get-referral-list', getReferralList);
 
 router.post('/send-coin', async (req, res) => {
     try {

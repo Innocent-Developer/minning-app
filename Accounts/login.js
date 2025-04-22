@@ -21,33 +21,50 @@ const login = async (req, res) => {
         // Generate JWT Token
         const token = jwt.sign(
             { userId: user._id, email: user.email },
-            process.env.JWT_SECRET, // Ensure you have a JWT_SECRET in your .env file
-            { expiresIn: "7d" } // Token expires in 7 days
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
         );
 
-        // Send response with token
+        // Send response with complete user info (excluding password)
+        const {
+            _id,
+            Fullname,
+            email: userEmail,
+            phone,
+            address,
+            inviteCode,
+            referallcode,
+            totalBalance,
+            availableBalance,
+            sendCoin,
+            receiveAddress,
+            senderAddress,
+            kycStatuys,
+            totalReferal,
+            lastMined,
+            stakings
+        } = user;
+
         res.status(200).json({
             message: "Login successful",
             token,
             user: {
-                id: user._id,
-                Fullname: user.Fullname,
-                email: user.email,
-                password: user.password,
-                phone: user.phone,
-                address: user.address,
-                inviteCode: user.inviteCode,
-                referallcode: user.referallcode,
-                totalBalance: user.totalBalance,
-                availableBalance: user.availableBalance,
-                sendCoin: user.sendCoin,
-                receiveAddress: user.receiveAddress,
-                senderAddress: user.senderAddress,
-                kycStatuys: user.kycStatuys,
-                totalReferal: user.totalReferal,
-                resetPasswordToken: user.resetPasswordToken,
-                resetPasswordExpires: user.resetPasswordExpires,
-                lastMined: user.lastMined
+                _id,
+                Fullname,
+                email: userEmail,
+                phone,
+                address,
+                inviteCode,
+                referallcode,
+                totalBalance,
+                availableBalance,
+                sendCoin,
+                receiveAddress,
+                senderAddress,
+                kycStatuys,
+                totalReferal,
+                lastMined,
+                stakings
             }
         });
 

@@ -15,34 +15,42 @@ const accountCreateSchema = new Schema({
     },
     referallcode: { type: String, required: false },
     totalBalance: { type: String, required: false, default: "0" },
-    availableBalance: { type: String, require: false, default: "0" },
+    availableBalance: { type: String, required: false, default: "0" },
     sendCoin: { type: String, required: false, default: "0" },
-    receiveAddress: { type: String, },
-    senderAddress: { type: String, },
-    kycStatuys: { type: String, require: false, default: "un-verifed" },
+    receiveAddress: { type: String },
+    senderAddress: { type: String },
+    kycStatuys: { type: String, required: false, default: "un-verifed" },
     totalReferal: { type: String, default: "0" },
     resetPasswordToken: { type: String, required: false },
     resetPasswordExpires: { type: Date, required: false },
-    lastMined: { type: Date, required: false }
-    
+    lastMined: { type: Date, required: false },
 
+    // 👇 New stakings array
+    stakings: [
+        {
+            amount: Number,
+            duration: Number,
+            durationType: { type: String, enum: ['month', 'year'] },
+            rewardAmount: Number,
+            stakedAt: { type: Date },
+            maturityDate: { type: Date },
+            status: { type: String, enum: ['active', 'completed'], default: 'active' }
+        }
+    ]
 });
 
 // Pre-save hook to generate unique receiving and sender addresses
 accountCreateSchema.pre('save', function(next) {
     if (!this.receiveAddress) {
-        // Generate a unique 32 character address using crypto
         const uniqueString = crypto.randomBytes(16).toString('hex');
-        this.receiveAddress = `MN${uniqueString}`; // Prefix with MN for Mining Network
+        this.receiveAddress = `MN${uniqueString}`;
     }
     if (!this.senderAddress) {
-        // Generate a unique 32 character address using crypto
         const uniqueString = crypto.randomBytes(16).toString('hex');
-        this.senderAddress = `MN${uniqueString}`; // Prefix with MN for Mining Network
+        this.senderAddress = `MN${uniqueString}`;
     }
     next();
 });
 
 const AccountCreate = mongoose.model('AccountCreate', accountCreateSchema);
 module.exports = AccountCreate;
-

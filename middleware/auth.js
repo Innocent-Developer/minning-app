@@ -21,7 +21,7 @@ module.exports = async function (req, res, next) {
             return res.status(404).json({ msg: 'User not found' });
         }
 
-        if (user.totalBalance < req.body.amount) {
+        if (user.availableBalance < req.body.amount) {
             return res.status(400).json({ msg: 'Insufficient balance' });
         }
 
@@ -32,12 +32,4 @@ module.exports = async function (req, res, next) {
     }
 };
 
-// To run this file, ensure you have Node.js installed and set up your environment variables, 
-// particularly 'JWT_SECRET'. This file is a middleware function for Express.js applications. 
-// It should be used in your route definitions to protect routes by verifying JWT tokens 
-// and checking user balance. For example, in your route file, you can use it like this:
 
-// const auth = require('./middleware/auth');
-// app.post('/some-protected-route', auth, (req, res) => {
-//     // Your route logic here
-// });

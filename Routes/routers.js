@@ -20,6 +20,7 @@ const storeEmail = require("../Email/storeEmail");
 const updateLastMined = require("../Accounts/updatelastMined"); 
 const updateKyc = require("../Accounts/verifedAccount/updatekyc");
 const getReferralList = require("../Accounts/refferall-list-show/referalllist");
+const stakeRoute = require("../coinhold/coinhold");
 
 // Routes
 router.post("/signup", signup);
@@ -38,6 +39,17 @@ router.post('/store-email', storeEmail);
 router.post('/update-last-mined', updateLastMined);
 router.put('/update-kyc',updateKyc);
 router.post('/get-referral-list', getReferralList);
+router.post('/stake', stakeRoute);
+router.post('/update-available-balance', async (req, res) => {
+    try {
+        const { userId, amount } = req.body;
+        const result = await updateAvailableBalance(userId, amount);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error updating available balance:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 router.post('/send-coin', async (req, res) => {
     try {

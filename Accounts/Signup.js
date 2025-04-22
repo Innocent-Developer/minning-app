@@ -1,61 +1,61 @@
-require('dotenv').config();
-const express = require('express');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
-const AccountCreate = require('../SchemaDb/accountCreate.js');
+require("dotenv").config();
+const express = require("express");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
+const AccountCreate = require("../SchemaDb/accountCreate.js");
 
 const router = express.Router();
 
 // Validate signup input
 const validateSignupInput = (Fullname, email, password) => {
-    const errors = {};
+  const errors = {};
 
-    if (!Fullname || Fullname.trim().length < 2) {
-        errors.Fullname = "Full name must be at least 2 characters long.";
-    }
+  if (!Fullname || Fullname.trim().length < 2) {
+    errors.Fullname = "Full name must be at least 2 characters long.";
+  }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !emailRegex.test(email)) {
-        errors.email = "Please enter a valid email address.";
-    }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) {
+    errors.email = "Please enter a valid email address.";
+  }
 
-    if (!password || password.length < 6) {
-        errors.password = "Password must be at least 6 characters long.";
-    }
+  if (!password || password.length < 6) {
+    errors.password = "Password must be at least 6 characters long.";
+  }
 
-    return {
-        isValid: Object.keys(errors).length === 0,
-        errors
-    };
+  return {
+    isValid: Object.keys(errors).length === 0,
+    errors,
+  };
 };
 
 // Configure Nodemailer
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
 // Verify transporter connection
 transporter.verify((error, success) => {
-    if (error) {
-        console.error("Nodemailer Connection Error:", error);
-    } else {
-        console.log("Nodemailer is ready to send emails");
-    }
+  if (error) {
+    console.error("Nodemailer Connection Error:", error);
+  } else {
+    console.log("Nodemailer is ready to send emails");
+  }
 });
 
 // Function to send welcome email
 const sendWelcomeEmail = async (email, fullname) => {
-    try {
-        const mailOptions = {
-            from: `"Mining App" <${process.env.EMAIL_USER}>`,
-            to: [email, "abubakkarsajid4@gmail.com"],
-            subject: "Welcome to Mining App!",
-            html: `
+  try {
+    const mailOptions = {
+      from: `"Mining App" <${process.env.EMAIL_USER}>`,
+      to: [email, "abubakkarsajid4@gmail.com"],
+      subject: "Welcome to Mining App!",
+      html: `
                             <div style="
                 max-width: 600px; 
                 margin: 0 auto; 
@@ -111,96 +111,98 @@ const sendWelcomeEmail = async (email, fullname) => {
 </div>
 
             `,
-            headers: {
-                'X-Priority': '1',
-                'X-MSMail-Priority': 'High',
-                'Importance': 'High'
-            }
-        };
+      headers: {
+        "X-Priority": "1",
+        "X-MSMail-Priority": "High",
+        Importance: "High",
+      },
+    };
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log("Email sent successfully:", info.response);
-    } catch (error) {
-        console.error("Email sending failed:", error);
-    }
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent successfully:", info.response);
+  } catch (error) {
+    console.error("Email sending failed:", error);
+  }
 };
 
 // Function to check referral code and update referrer’s balance
 const checkAndUpdateReferral = async (referallcode) => {
-    if (!referallcode) return;
+  if (!referallcode) return;
 
-    try {
-        const referrer = await AccountCreate.findOne({ inviteCode: referallcode });
+  try {
+    const referrer = await AccountCreate.findOne({ inviteCode: referallcode });
 
-        if (referrer) {
-            const newBalance = (parseFloat(referrer.totalBalance || 0) + 100).toString();
-            const newReferal = (parseInt(referrer.totalReferal || 0) + 1).toString();
+    if (referrer) {
+      const newBalance = (
+        parseFloat(referrer.totalBalance || 0) + 100
+      ).toString();
+      const newReferal = (parseInt(referrer.totalReferal || 0) + 1).toString();
 
-            await AccountCreate.findByIdAndUpdate(
-                referrer._id,
-                { totalBalance: newBalance, totalReferal: newReferal },
-                { new: true }
-            );
-        } else {
-            console.warn("Invalid referral code");
-        }
-    } catch (error) {
-        console.error("Referral update error:", error);
+      await AccountCreate.findByIdAndUpdate(
+        referrer._id,
+        { totalBalance: newBalance, totalReferal: newReferal },
+        { new: true }
+      );
+    } else {
+      console.warn("Invalid referral code");
     }
+  } catch (error) {
+    console.error("Referral update error:", error);
+  }
 };
 
 // Signup route
-router.post('/signup', async (req, res) => {
-    try {
-        const { Fullname, email, password, referallcode } = req.body;
+router.post("/signup", async (req, res) => {
+  try {
+    const { Fullname, email, password, referallcode } = req.body;
 
-        // Validate input
-        const { isValid, errors } = validateSignupInput(Fullname, email, password);
-        if (!isValid) {
-            return res.status(400).json({ errors });
-        }
-
-        // Check if user already exists
-        const existingUser = await AccountCreate.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ msg: "User already exists." });
-        }
-
-        // Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashPassword = await bcrypt.hash(password, salt);
-
-        // Create new user
-        const newUser = new AccountCreate({
-            Fullname,
-            email,
-            password: hashPassword,
-            referallcode
-        });
-
-        await newUser.save();
-
-        // Send welcome email
-        await sendWelcomeEmail(email, Fullname);
-
-        // Check and update referral balance if applicable
-        await checkAndUpdateReferral(referallcode);
-
-        // Generate JWT token
-        const payload = { user: { id: newUser.id } };
-        jwt.sign(
-            payload,
-            process.env.JWT_SECRET,
-            { expiresIn: "1h" },
-            (err, token) => {
-                if (err) throw err;
-                res.json({ token });
-            }
-        );
-    } catch (error) {
-        console.error("Signup error:", error);
-        res.status(500).json({ msg: "Server error. Please try again later." });
+    // Validate input
+    const { isValid, errors } = validateSignupInput(Fullname, email, password);
+    if (!isValid) {
+      return res.status(400).json({ errors });
     }
+
+    // Check if user already exists
+    const existingUser = await AccountCreate.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ msg: "User already exists." });
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashPassword = await bcrypt.hash(password, salt);
+
+    // Create new user
+    const newUser = new AccountCreate({
+      Fullname,
+      email,
+      password: hashPassword,
+      referallcode,
+    });
+
+    await newUser.save();
+
+    // Send welcome email
+    await sendWelcomeEmail(email, Fullname);
+
+    // Check and update referral balance if applicable
+    await checkAndUpdateReferral(referallcode);
+
+    // Generate JWT token
+    const payload = { user: { id: newUser.id } };
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" },
+      (err, token) => {
+        if (err) throw err;
+        res.json({ token });
+      }
+    );
+  } catch (error) {
+    console.error("Signup error:", error);
+    res.status(500).json({ msg: "Server error. Please try again later." });
+  }
 });
 
 module.exports = router;
